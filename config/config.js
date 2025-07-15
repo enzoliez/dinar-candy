@@ -6,7 +6,7 @@ module.exports = {
     imageEnabled: true,
     backgroundColor: '#7289da',
     textColor: '#ffffff',
-    backgroundImage: 'https://i.imgur.com/NxczNW9.png'
+    backgroundImage: 'https://i.imgur.com/Eo0ZnOk.jpeg'
   },
 
   goodbyeSettings: {
