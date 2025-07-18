@@ -208,4 +208,44 @@ client.on(Events.GuildMemberUpdate, async (oldMember, newMember) => {
   }
 });
 
+// 🤖 AI Chat dengan OpenAI
+const { Configuration, OpenAIApi } = require("openai");
+
+// Konfigurasi OpenAI
+const openai = new OpenAIApi(
+  new Configuration({
+    apiKey: process.env.OPENAI_API_KEY,
+  })
+);
+
+// Hanya aktif di channel ID tertentu
+const aiChannelId = "1395914961817043044";
+
+// Event pesan masuk untuk AI Chat
+client.on(Events.MessageCreate, async (message) => {
+  if (
+    message.channel.id !== aiChannelId ||
+    message.author.bot ||
+    message.content.startsWith("!")
+  ) return;
+
+  try {
+    await message.channel.sendTyping();
+
+    const response = await openai.createChatCompletion({
+      model: "gpt-3.5-turbo",
+      messages: [
+        { role: "system", content: "You are a helpful assistant." },
+        { role: "user", content: message.content }
+      ],
+    });
+
+    const reply = response.data.choices[0].message.content;
+    message.reply(reply);
+  } catch (err) {
+    console.error("❌ Gagal menjawab dengan AI:", err);
+    message.reply("Maaf, terjadi kesalahan saat memanggil AI.");
+  }
+});
+
 client.login(process.env.TOKEN);
