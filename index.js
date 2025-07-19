@@ -6,6 +6,7 @@ const {
 } = require("discord.js");
 const { generateWelcomeImage } = require("./utils/imageGenerator");
 const config = require("./config/config");
+const { OpenAI } = require("openai");
 require("dotenv").config();
 require("./server");
 
@@ -16,6 +17,10 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
   ],
+});
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 client.once(Events.ClientReady, () => {
@@ -71,7 +76,7 @@ client.on(Events.GuildMemberAdd, async (member) => {
   }
 });
 
-// 🧪 Command !!test hanya untuk ID tertentu
+// 🧪 !!test untuk simulasi welcome
 client.on(Events.MessageCreate, async (message) => {
   if (
     message.content === "!!test" &&
@@ -171,7 +176,7 @@ client.on(Events.GuildMemberUpdate, async (oldMember, newMember) => {
   }
 });
 
-// 🌟 Notifikasi saat user boost server
+// 🌟 Notifikasi boost
 client.on(Events.GuildMemberUpdate, async (oldMember, newMember) => {
   const boostRoleId = "1111573679789314120";
   const boostChannel = client.channels.cache.get("1095223644147417169");
@@ -208,43 +213,38 @@ client.on(Events.GuildMemberUpdate, async (oldMember, newMember) => {
   }
 });
 
-// 🤖 AI Chat dengan OpenAI
-const { Configuration, OpenAIApi } = require("openai");
-
-// Konfigurasi OpenAI
-const openai = new OpenAIApi(
-  new Configuration({
-    apiKey: process.env.OPENAI_API_KEY,
-  })
-);
-
-// Hanya aktif di channel ID tertentu
-const aiChannelId = "1395914961817043044";
-
-// Event pesan masuk untuk AI Chat
+// 💬 AI Chat hanya untuk satu channel
 client.on(Events.MessageCreate, async (message) => {
+  const aiChannelId = "1395914961817043044";
+
   if (
     message.channel.id !== aiChannelId ||
     message.author.bot ||
-    message.content.startsWith("!")
+    message.content.length < 1
   ) return;
 
   try {
     await message.channel.sendTyping();
 
-    const response = await openai.createChatCompletion({
+    const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
-        { role: "system", content: "You are a helpful assistant." },
-        { role: "user", content: message.content }
+        {
+          role: "user",
+          content: message.content,
+        },
       ],
     });
 
-    const reply = response.data.choices[0].message.content;
-    message.reply(reply);
+    const reply = completion.choices[0]?.message?.content;
+    if (reply) {
+      await message.reply(reply);
+    } else {
+      await message.reply("❌ Maaf, aku tidak bisa menjawab pertanyaan itu.");
+    }
   } catch (err) {
-    console.error("❌ Gagal menjawab dengan AI:", err);
-    message.reply("Maaf, terjadi kesalahan saat memanggil AI.");
+    console.error("❌ Gagal membalas dengan AI:", err);
+    await message.reply("⚠️ Maaf, terjadi kesalahan saat menghubungi AI.");
   }
 });
 
