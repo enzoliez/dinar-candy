@@ -213,39 +213,4 @@ client.on(Events.GuildMemberUpdate, async (oldMember, newMember) => {
   }
 });
 
-// 💬 AI Chat hanya untuk satu channel
-client.on(Events.MessageCreate, async (message) => {
-  const aiChannelId = "1395914961817043044";
-
-  if (
-    message.channel.id !== aiChannelId ||
-    message.author.bot ||
-    message.content.length < 1
-  ) return;
-
-  try {
-    await message.channel.sendTyping();
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [
-        {
-          role: "user",
-          content: message.content,
-        },
-      ],
-    });
-
-    const reply = completion.choices[0]?.message?.content;
-    if (reply) {
-      await message.reply(reply);
-    } else {
-      await message.reply("❌ Maaf, aku tidak bisa menjawab pertanyaan itu.");
-    }
-  } catch (err) {
-    console.error("❌ Gagal membalas dengan AI:", err);
-    await message.reply("⚠️ Maaf, terjadi kesalahan saat menghubungi AI.");
-  }
-});
-
 client.login(process.env.TOKEN);
